@@ -22,14 +22,8 @@ def click_element(driver: WebDriver, element: WebElement) -> None:
     :param driver: WebDriver instance
     :param element: WebElement to click
     """
-    try:
-        driver.execute_script("arguments[0].click();", element)
-        time.sleep(1)  # Slight delay to avoid overwhelming the page
-    except WebDriverException as e:
-        print(f"WebDriver error: {e}")
-        wait_for_internet()  # Wait for internet connectivity
-    except Exception as e:
-        print(f"Failed to click element: {e}")
+    driver.execute_script("arguments[0].click();", element)
+    time.sleep(1)  # Slight delay to avoid overwhelming the page
 
 
 def find_subscribe_button(newsletter_card: WebElement) -> WebElement:
@@ -39,16 +33,7 @@ def find_subscribe_button(newsletter_card: WebElement) -> WebElement:
     :param newsletter_card: WebElement of the newsletter card
     :return: WebElement of the "Subscribe" button
     """
-    return newsletter_card.find_element(by=By. XPATH, value=".//div[@class='p3']//button")
-
-# def find_subscribed_button(newsletter_card: WebElement) -> WebElement:
-#     """
-#     Finds the "Subscribe" button within a newsletter card.
-#
-#     :param newsletter_card: WebElement of the newsletter card
-#     :return: WebElement of the "Subscribe" button
-#     """
-#     return newsletter_card.find_element(by=By. XPATH, value=".//div[@class='p3']//button")
+    return newsletter_card.find_element(by=By.XPATH, value=".//div[@class='p3']//button")
 
 
 def scroll_to_bottom(driver: WebDriver) -> None:
@@ -70,6 +55,50 @@ def scroll_to_bottom(driver: WebDriver) -> None:
             break
         last_height = new_height
     print("Scrolled to the bottom of the page.")
+
+
+def handle_subscription(driver: WebDriver, newsletter_card: WebElement, existing_urls: List[str],
+                        subscribed_newsletters: List[str], failed_attempts: Dict[str, WebElement]) -> None:
+    """
+    Handles the subscription process for a single newsletter card.
+
+    :param driver: WebDriver instance
+    :param newsletter_card: WebElement of the newsletter card
+    :param existing_urls: List of existing newsletter URLs
+    :param subscribed_newsletters: List of subscribed newsletter URLs
+    :param failed_attempts: Dictionary of failed attempts with URLs and WebElements
+    """
+    newsletter_url: str | None = None
+    subscribe_button: WebElement | None = None
+    try:
+        # Get the address of the newsletter and check if it has already been subscribed to
+        newsletter_url = newsletter_card.find_element(by=By.TAG_NAME, value="a").get_attribute("href")
+        if newsletter_url and (newsletter_url in existing_urls or newsletter_url in subscribed_newsletters):
+            print(f"Already subscribed to: {newsletter_url}")
+            return
+
+        # Click the "Subscribe" button
+        subscribe_button = find_subscribe_button(newsletter_card)
+        if subscribe_button.text == "Subscribe":
+            click_element(driver, subscribe_button)
+
+            # Check if the subscription was successful
+            subscribed_button = find_subscribe_button(newsletter_card)
+            if subscribed_button.text == "Subscribed":
+                subscribed_newsletters.append(newsletter_url)
+                print(f"Subscribed and scraped: {newsletter_url}")
+            else:
+                # Subscription failed, retry later (could be due to network issues)
+                print(f"Failed to subscribe to newsletter: {newsletter_url}")
+                wait_for_internet()
+                failed_attempts[newsletter_url] = subscribe_button
+    except (
+    NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException, WebDriverException) as e:
+        print(f"Error occurred for {newsletter_url}: {e}")
+        wait_for_internet()
+        failed_attempts[newsletter_url] = subscribe_button
+    except Exception as e:
+        print(f"Failed to subscribe to newsletter: {e}")
 
 
 def subscribe_to_newsletters(driver: WebDriver, existing_urls: List[str]) -> List[str]:
@@ -124,40 +153,7 @@ def subscribe_to_newsletters(driver: WebDriver, existing_urls: List[str]) -> Lis
         newsletter_cards = modal.find_elements(by=By.CLASS_NAME, value="discover-fluid-entity-list--item")
 
         for newsletter_card in newsletter_cards:
-            newsletter_url: str | None = None
-            subscribe_button: WebElement | None = None
-            try:
-                # Get the address of the newsletter subscription page
-                newsletter_url = newsletter_card.find_element(by=By.TAG_NAME, value="a").get_attribute("href")
-
-                if newsletter_url and (newsletter_url in existing_urls or newsletter_url in subscribed_newsletters):
-                    print(f"Already subscribed to: {newsletter_url}")
-                    continue
-
-                # Check for the "Subscribe" button within each newsletter card
-                subscribe_button = find_subscribe_button(newsletter_card)
-                if subscribe_button.text == "Subscribe":
-                    click_element(driver, subscribe_button)
-
-                    subscribed_button: WebElement = find_subscribe_button(newsletter_card)
-
-                    if subscribed_button.text == "Subscribed":
-                        subscribed_newsletters.append(newsletter_url)
-                        print(f"Subscribed and scraped: {newsletter_url}")
-                    else:
-                        print(f"Failed to subscribe to newsletter: {newsletter_url}")
-                        print("Waiting for internet connection...")
-                        wait_for_internet()  # Check and wait for internet connectivity
-                        failed_attempts[newsletter_url] = subscribe_button
-
-            except (NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException,
-                    WebDriverException) as e:
-                print(f"Error occurred for {newsletter_url}: {e}")
-                print("Waiting for internet connection...")
-                wait_for_internet()  # Check and wait for internet connectivity
-                failed_attempts[newsletter_url] = subscribe_button
-            except Exception as e:
-                print(f"Failed to subscribe to newsletter: {e}")
+            handle_subscription(driver, newsletter_card, existing_urls, subscribed_newsletters, failed_attempts)
 
         # Scroll to load more newsletters in the modal
         driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", modal)
@@ -170,20 +166,43 @@ def subscribe_to_newsletters(driver: WebDriver, existing_urls: List[str]) -> Lis
             break
         last_height = new_height
 
+    # Verify if failed newsletters were subscribed to
     if failed_attempts:
-        print(f"Failed to subscribe to {len(failed_attempts)} newsletters. Retrying...")
-        # Retry failed attempts
-        for newsletter_url, subscribe_button in failed_attempts.items():
-            try:
-                click_element(driver, subscribe_button)
-                subscribed_newsletters.append(newsletter_url)
-                print(f"Subscribed and scraped on retry: {newsletter_url}")
-            except (NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException,
-                    WebDriverException) as e:
-                print(f"Retry failed for {newsletter_url}: {e}")
-                print("Waiting for internet connection...")
-                wait_for_internet()  # Wait for internet connectivity
-            except Exception as e:
-                print(f"Failed to subscribe to newsletter: {newsletter_url}, on retry: {e}")
+        print(f"Failed to subscribe to {len(failed_attempts)} newsletters. Retrying up to 3 times...")
+        retry_count: int = 3
+        for _ in range(retry_count):
+            if not failed_attempts:
+                break
+            current_failed_attempts: Dict[str, WebElement] = failed_attempts.copy()
+            failed_attempts.clear()
+            for newsletter_url, subscribe_button in current_failed_attempts.items():
+                try:
+                    click_element(driver, subscribe_button)
+
+                    # Check if the subscription was successful
+                    subscribed_button = find_subscribe_button(subscribe_button.find_element(By.XPATH, ".."))
+                    if subscribed_button.text == "Subscribed":
+                        subscribed_newsletters.append(newsletter_url)
+                        print(f"Subscribed and scraped on retry: {newsletter_url}")
+                    else:
+                        print(f"Failed to subscribe to newsletter: {newsletter_url}")
+                        wait_for_internet()
+                        failed_attempts[newsletter_url] = subscribe_button
+                except StaleElementReferenceException:
+                    print("Already subscribed to newsletter...")
+                    subscribed_newsletters.append(
+                        newsletter_url) if newsletter_url not in subscribed_newsletters else None
+                except (NoSuchElementException, ElementClickInterceptedException, WebDriverException) as e:
+                    print(f"Retry failed for {newsletter_url}: {e}")
+                    wait_for_internet()  # Wait for internet connectivity
+                    failed_attempts[newsletter_url] = subscribe_button
+                except Exception as e:
+                    print(f"Failed to subscribe to newsletter: {newsletter_url}, on retry: {e}")
+                    failed_attempts[newsletter_url] = subscribe_button
+
+        if failed_attempts:
+            print(f"Failed to subscribe to the following newsletters after {retry_count} attempts:")
+            for newsletter_url in failed_attempts.keys():
+                print(newsletter_url)
 
     return subscribed_newsletters

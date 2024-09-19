@@ -52,7 +52,6 @@ def share_newsletters(driver: WebDriver, newsletter_urls: List[str]) -> List[str
                 WebDriverException) as e:
             print(f"Error occurred for {url}: {e}")
             erroneous_urls.append(url)
-            print("Waiting for internet connection...")
             wait_for_internet()  # Wait for internet connectivity
         except Exception as e:
             print(f"Failed to share newsletter {url}: {e}")
