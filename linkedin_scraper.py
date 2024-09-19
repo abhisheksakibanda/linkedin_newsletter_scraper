@@ -39,7 +39,16 @@ def find_subscribe_button(newsletter_card: WebElement) -> WebElement:
     :param newsletter_card: WebElement of the newsletter card
     :return: WebElement of the "Subscribe" button
     """
-    return newsletter_card.find_element(by=By.XPATH, value=".//*[contains(@aria-label, 'Subscribe to')]")
+    return newsletter_card.find_element(by=By. XPATH, value=".//div[@class='p3']//button")
+
+# def find_subscribed_button(newsletter_card: WebElement) -> WebElement:
+#     """
+#     Finds the "Subscribe" button within a newsletter card.
+#
+#     :param newsletter_card: WebElement of the newsletter card
+#     :return: WebElement of the "Subscribe" button
+#     """
+#     return newsletter_card.find_element(by=By. XPATH, value=".//div[@class='p3']//button")
 
 
 def scroll_to_bottom(driver: WebDriver) -> None:
@@ -129,8 +138,17 @@ def subscribe_to_newsletters(driver: WebDriver, existing_urls: List[str]) -> Lis
                 subscribe_button = find_subscribe_button(newsletter_card)
                 if subscribe_button.text == "Subscribe":
                     click_element(driver, subscribe_button)
-                    subscribed_newsletters.append(newsletter_url)
-                    print(f"Subscribed and scraped: {newsletter_url}")
+
+                    subscribed_button: WebElement = find_subscribe_button(newsletter_card)
+
+                    if subscribed_button.text == "Subscribed":
+                        subscribed_newsletters.append(newsletter_url)
+                        print(f"Subscribed and scraped: {newsletter_url}")
+                    else:
+                        print(f"Failed to subscribe to newsletter: {newsletter_url}")
+                        print("Waiting for internet connection...")
+                        wait_for_internet()  # Check and wait for internet connectivity
+                        failed_attempts[newsletter_url] = subscribe_button
 
             except (NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException,
                     WebDriverException) as e:
