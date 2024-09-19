@@ -1,4 +1,8 @@
+"""
+Utility functions for saving and loading newsletter URLs to and from an Excel file.
+"""
 import os
+from typing import List
 
 import openpyxl
 from openpyxl import Workbook
@@ -6,7 +10,13 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 
 # Save newsletter URLs to an Excel file
-def save_newsletters_to_excel(newsletter_urls, file_name="subscribed_newsletters.xlsx"):
+def save_newsletters_to_excel(newsletter_urls: List[str], file_name="subscribed_newsletters.xlsx") -> None:
+    """
+    Save the list of newsletter URLs to an Excel file.
+
+    :param newsletter_urls: List of newsletter URLs to save
+    :param file_name: Name of the Excel file
+    """
     if not os.path.exists(file_name):
         workbook = Workbook()
         sheet: Worksheet | None = workbook.active
@@ -28,7 +38,13 @@ def save_newsletters_to_excel(newsletter_urls, file_name="subscribed_newsletters
 
 
 # Load Newsletter URLs from the Excel file
-def load_newsletters_from_excel(file_name="subscribed_newsletters.xlsx") -> list[str]:
+def load_newsletters_from_excel(file_name: str = "subscribed_newsletters.xlsx") -> list[str]:
+    """
+    Load newsletter URLs from an Excel file.
+
+    :param file_name: Name of the Excel file
+    :return: List of newsletter URLs
+    """
     if not os.path.exists(file_name):
         print(f"File {file_name} not found.")
         return []

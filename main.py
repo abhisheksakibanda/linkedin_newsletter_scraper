@@ -1,3 +1,6 @@
+"""
+Main script to scrape LinkedIn newsletters, subscribe to them, and share them with connections.
+"""
 from typing import List
 
 from selenium import webdriver
@@ -14,7 +17,12 @@ from utils import save_newsletters_to_excel, load_newsletters_from_excel
 chrome_driver: WebDriver = webdriver.Chrome()
 
 
-def login_with_cookies(driver: WebDriver):
+def login_with_cookies(driver: WebDriver) -> None:
+    """
+    Log in to LinkedIn using cookies if available, otherwise prompt for manual login.
+
+    :param driver: WebDriver instance
+    """
     driver.get(url="https://www.linkedin.com/")
     try:
         load_cookies(driver=driver)

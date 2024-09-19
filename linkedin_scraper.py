@@ -1,3 +1,6 @@
+"""
+This module contains functions to scrape newsletters from LinkedIn and subscribe to them.
+"""
 import time
 from typing import List, Dict
 
@@ -12,7 +15,13 @@ from selenium.webdriver.support.wait import WebDriverWait
 from internet_manager import wait_for_internet
 
 
-def click_element(driver: WebDriver, element: WebElement):
+def click_element(driver: WebDriver, element: WebElement) -> None:
+    """
+    Clicks an element using JavaScript to avoid any overlay issues.
+
+    :param driver: WebDriver instance
+    :param element: WebElement to click
+    """
     try:
         driver.execute_script("arguments[0].click();", element)
         time.sleep(1)  # Slight delay to avoid overwhelming the page
@@ -24,12 +33,20 @@ def click_element(driver: WebDriver, element: WebElement):
 
 
 def find_subscribe_button(newsletter_card: WebElement) -> WebElement:
+    """
+    Finds the "Subscribe" button within a newsletter card.
+
+    :param newsletter_card: WebElement of the newsletter card
+    :return: WebElement of the "Subscribe" button
+    """
     return newsletter_card.find_element(by=By.XPATH, value=".//*[contains(@aria-label, 'Subscribe to')]")
 
 
-def scroll_to_bottom(driver: WebDriver):
+def scroll_to_bottom(driver: WebDriver) -> None:
     """
-    Scrolls to the bottom of the page until no new content loads.
+    Scroll to the bottom of the page to load all the content.
+
+    :param driver: WebDriver instance
     """
     last_height = driver.execute_script("return document.body.scrollHeight")
 
@@ -47,6 +64,13 @@ def scroll_to_bottom(driver: WebDriver):
 
 
 def subscribe_to_newsletters(driver: WebDriver, existing_urls: List[str]) -> List[str]:
+    """
+    Subscribe to newsletters on LinkedIn and scrape their URLs.
+
+    :param driver: WebDriver instance
+    :param existing_urls: List of existing newsletter URLs
+    :return: List of subscribed newsletter URLs
+    """
     driver.get(url="https://www.linkedin.com/mynetwork/grow/")
 
     # Wait for the page to load

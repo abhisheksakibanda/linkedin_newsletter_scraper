@@ -1,7 +1,11 @@
+"""
+This module contains the function to share newsletters on LinkedIn by reposting them to the feed.
+"""
 import time
 from typing import List
 
-from selenium.common import NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException, WebDriverException
+from selenium.common import NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException, \
+    WebDriverException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -10,7 +14,15 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from internet_manager import wait_for_internet
 
+
 def share_newsletters(driver: WebDriver, newsletter_urls: List[str]) -> List[str]:
+    """
+    Share newsletters on LinkedIn by reposting them to the feed.
+
+    :param driver: WebDriver instance
+    :param newsletter_urls: List of newsletter URLs to share
+    :return: List of URLs that failed to share
+    """
     erroneous_urls: List[str] = []
     for idx, url in enumerate(newsletter_urls):
         # Pause for 10 minutes when visiting every 100 posts
@@ -36,7 +48,8 @@ def share_newsletters(driver: WebDriver, newsletter_urls: List[str]) -> List[str
             post_button.click()
             time.sleep(2)
             print(f"Reposted newsletter: {url}")
-        except (NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException, WebDriverException) as e:
+        except (NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException,
+                WebDriverException) as e:
             print(f"Error occurred for {url}: {e}")
             erroneous_urls.append(url)
             print("Waiting for internet connection...")
