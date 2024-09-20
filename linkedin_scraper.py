@@ -23,7 +23,7 @@ def click_element(driver: WebDriver, element: WebElement) -> None:
     :param element: WebElement to click
     """
     driver.execute_script("arguments[0].click();", element)
-    time.sleep(1)  # Slight delay to avoid overwhelming the page
+    time.sleep(6)  # Slight delay to avoid overwhelming the page
 
 
 def find_subscribe_button(newsletter_card: WebElement) -> WebElement:
@@ -47,7 +47,7 @@ def scroll_to_bottom(driver: WebDriver) -> None:
     while True:
         # Scroll to the bottom of the page
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(2)  # Wait for content to load
+        time.sleep(6)  # Wait for content to load
 
         # Calculate new scroll height
         new_height = driver.execute_script("return document.body.scrollHeight")
@@ -146,25 +146,22 @@ def subscribe_to_newsletters(driver: WebDriver, existing_urls: List[str]) -> Lis
     # Wait for the modal to appear
     modal = wait.until(ec.visibility_of_element_located((By.CLASS_NAME, "artdeco-modal")))
 
+    # Scroll to the bottom of the modal to load all newsletters
     last_height = driver.execute_script("return arguments[0].scrollHeight", modal)
-
     while True:
-        # Find all the newsletter cards in the modal
-        newsletter_cards = modal.find_elements(by=By.CLASS_NAME, value="discover-fluid-entity-list--item")
-
-        for newsletter_card in newsletter_cards:
-            handle_subscription(driver, newsletter_card, existing_urls, subscribed_newsletters, failed_attempts)
-
-        # Scroll to load more newsletters in the modal
         driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", modal)
-        time.sleep(2)  # Wait for new content to load
-
-        # Check if at the bottom of the modal
+        time.sleep(6)  # Wait for new content to load
         new_height = driver.execute_script("return arguments[0].scrollHeight", modal)
         if new_height == last_height:
-            print("Reached the bottom of the modal, no more content to load.")
+            print("Reached the bottom of the modal, all newsletters should be loaded.")
             break
         last_height = new_height
+
+    # Once all newsletters are loaded, find all the newsletter cards in the modal
+    newsletter_cards = modal.find_elements(by=By.CLASS_NAME, value="discover-fluid-entity-list--item")
+
+    for newsletter_card in newsletter_cards:
+        handle_subscription(driver, newsletter_card, existing_urls, subscribed_newsletters, failed_attempts)
 
     # Verify if failed newsletters were subscribed to
     if failed_attempts:

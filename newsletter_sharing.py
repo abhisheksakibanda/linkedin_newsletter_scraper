@@ -30,7 +30,7 @@ def share_newsletters(driver: WebDriver, newsletter_urls: List[str]) -> List[str
             time.sleep(600)
         driver.execute_script(script=f"window.open('{url}', '_blank');")
         driver.switch_to.window(window_name=driver.window_handles[-1])
-        time.sleep(3)
+        time.sleep(6)
 
         # Wait for the dropdown with "Repost to Feed" to appear
         wait = WebDriverWait(driver, timeout=10)
@@ -38,15 +38,15 @@ def share_newsletters(driver: WebDriver, newsletter_urls: List[str]) -> List[str
         try:
             share_button: WebElement = driver.find_element(By.ID, "publishing-entity-share-dropdown-trigger")
             share_button.click()
-            time.sleep(2)
+            time.sleep(6)
             repost_list_item: WebElement = wait.until(
                 ec.element_to_be_clickable((By.XPATH, "//*[text()='Repost to Feed']")))
             repost_list_item.click()
-            time.sleep(2)
+            time.sleep(6)
 
             post_button = driver.find_element(by=By.XPATH, value="//*[text()='Post']//ancestor::button")
             post_button.click()
-            time.sleep(2)
+            time.sleep(6)
             print(f"Reposted newsletter: {url}")
         except (NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException,
                 WebDriverException) as e:
