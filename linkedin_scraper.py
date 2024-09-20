@@ -93,7 +93,8 @@ def handle_subscription(driver: WebDriver, newsletter_card: WebElement, existing
                 wait_for_internet()
                 failed_attempts[newsletter_url] = subscribe_button
     except (
-    NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException, WebDriverException) as e:
+            NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException,
+            WebDriverException) as e:
         print(f"Error occurred for {newsletter_url}: {e}")
         wait_for_internet()
         failed_attempts[newsletter_url] = subscribe_button
@@ -147,15 +148,7 @@ def subscribe_to_newsletters(driver: WebDriver, existing_urls: List[str]) -> Lis
     modal = wait.until(ec.visibility_of_element_located((By.CLASS_NAME, "artdeco-modal")))
 
     # Scroll to the bottom of the modal to load all newsletters
-    last_height = driver.execute_script("return arguments[0].scrollHeight", modal)
-    while True:
-        driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", modal)
-        time.sleep(6)  # Wait for new content to load
-        new_height = driver.execute_script("return arguments[0].scrollHeight", modal)
-        if new_height == last_height:
-            print("Reached the bottom of the modal, all newsletters should be loaded.")
-            break
-        last_height = new_height
+    scroll_to_bottom_of_modal(driver, modal)
 
     # Once all newsletters are loaded, find all the newsletter cards in the modal
     newsletter_cards = modal.find_elements(by=By.CLASS_NAME, value="discover-fluid-entity-list--item")
@@ -203,3 +196,27 @@ def subscribe_to_newsletters(driver: WebDriver, existing_urls: List[str]) -> Lis
                 print(newsletter_url)
 
     return subscribed_newsletters
+
+
+def scroll_to_bottom_of_modal(driver: WebDriver, modal: WebElement) -> None:
+    """
+    Scroll to the bottom of the modal to load all the content.
+
+    :param driver: WebDriver instance
+    :param modal: WebElement of the modal
+    """
+    # Get the initial scroll height
+    last_height = driver.execute_script("return arguments[0].scrollHeight", modal)
+
+    while True:
+        # Scroll to the bottom of the modal
+        driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", modal)
+        time.sleep(6)  # Wait for content to load
+
+        # Calculate new scroll height
+        new_height = driver.execute_script("return arguments[0].scrollHeight", modal)
+        time.sleep(4)
+        if new_height == last_height:
+            break
+        last_height = new_height
+    print("Scrolled to the bottom of the modal.")
