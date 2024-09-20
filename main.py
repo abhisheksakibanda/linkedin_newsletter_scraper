@@ -1,6 +1,7 @@
 """
 Main script to scrape LinkedIn newsletters, subscribe to them, and share them with connections.
 """
+import time
 from typing import List
 
 from selenium import webdriver
@@ -15,7 +16,6 @@ from utils import save_newsletters_to_excel, load_newsletters_from_excel
 
 # Start WebDriver
 chrome_driver: WebDriver = webdriver.Chrome()
-
 
 def login_with_cookies(driver: WebDriver) -> None:
     """
@@ -35,36 +35,39 @@ def login_with_cookies(driver: WebDriver) -> None:
         print(f"Login failed: {ex}")
         driver.quit()
 
-
 if __name__ == "__main__":
     try:
-        wait_for_internet()
-        login_with_cookies(driver=chrome_driver)
+        while True:
+            wait_for_internet()
+            login_with_cookies(driver=chrome_driver)
 
-        # Load existing newsletter URLs
-        existing_urls = load_newsletters_from_excel()
+            # Load existing newsletter URLs
+            existing_urls = load_newsletters_from_excel()
 
-        # Subscribe and scrape newsletter URLs
-        newsletter_urls: List[str] = subscribe_to_newsletters(driver=chrome_driver, existing_urls=existing_urls)
+            # Subscribe and scrape newsletter URLs
+            newsletter_urls: List[str] = subscribe_to_newsletters(driver=chrome_driver, existing_urls=existing_urls)
 
-        # Save URLs to Excel
-        save_newsletters_to_excel(newsletter_urls=newsletter_urls)
+            # Save URLs to Excel
+            save_newsletters_to_excel(newsletter_urls=newsletter_urls)
 
-        # Share newsletters and retry on errors
-        erroneous_urls = newsletter_urls  # Start with all scraped URLs
-        retry_count = 0
-        max_retries = 3  # Set a limit to avoid infinite retries
+            # Share newsletters and retry on errors
+            erroneous_urls = newsletter_urls  # Start with all scraped URLs
+            retry_count = 0
+            max_retries = 3  # Set a limit to avoid infinite retries
 
-        while erroneous_urls and retry_count < max_retries:
-            erroneous_urls = share_newsletters(driver=chrome_driver, newsletter_urls=erroneous_urls)
+            while erroneous_urls and retry_count < max_retries:
+                erroneous_urls = share_newsletters(driver=chrome_driver, newsletter_urls=erroneous_urls)
+                if erroneous_urls:
+                    print(
+                        f"\nFailed to share {len(erroneous_urls)} newsletters:\n{erroneous_urls}\nRetrying... (Attempt {retry_count + 1})")
+                retry_count += 1
+
             if erroneous_urls:
                 print(
-                    f"\nFailed to share {len(erroneous_urls)} newsletters:\n{erroneous_urls}\nRetrying... (Attempt {retry_count + 1})")
-            retry_count += 1
+                    f"\nFailed to share {len(erroneous_urls)} newsletters after {retry_count} attempts:\n{erroneous_urls}")
 
-        if erroneous_urls:
-            print(
-                f"\nFailed to share {len(erroneous_urls)} newsletters after {retry_count} attempts:\n{erroneous_urls}")
+            # Sleep for a specified interval before the next iteration
+            time.sleep(60)  # Sleep for 1 minute
 
     except NoSuchElementException as e:
         print(f"Element not found: {e}")
