@@ -47,7 +47,7 @@ def scroll_to_bottom(driver: WebDriver) -> None:
     while True:
         # Scroll to the bottom of the page
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(6)  # Wait for content to load
+        time.sleep(2)  # Wait for content to load
 
         # Calculate new scroll height
         new_height = driver.execute_script("return document.body.scrollHeight")
