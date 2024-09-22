@@ -36,11 +36,12 @@ def find_subscribe_button(newsletter_card: WebElement) -> WebElement:
     return newsletter_card.find_element(by=By.XPATH, value=".//div[@class='p3']//button")
 
 
-def scroll_to_bottom(driver: WebDriver) -> None:
+def scroll_to_bottom(driver: WebDriver, wait: WebDriverWait) -> None:
     """
     Scroll to the bottom of the page to load all the content.
 
     :param driver: WebDriver instance
+    :param wait: WebDriverWait instance for waiting for elements to load
     """
     last_height = driver.execute_script("return document.body.scrollHeight")
 
@@ -54,6 +55,30 @@ def scroll_to_bottom(driver: WebDriver) -> None:
         if new_height == last_height:
             break
         last_height = new_height
+
+        try:
+            # Locate all divs with the class 'discover-sections-list__item'
+            sections = wait.until(
+                ec.visibility_of_all_elements_located((By.CLASS_NAME, "discover-sections-list__item"))
+            )
+
+            for section in sections:
+                # Check if the section contains a "Subscribe" button
+                try:
+                    if section.find_element(by=By.XPATH, value=".//*[contains(@aria-label, 'Subscribe to')]"):
+                        # Scroll to the section and locate the "See all" button (usually the first button in the section)
+                        see_all_button = section.find_element(by=By.TAG_NAME, value="button")
+
+                        # Click the "See all" button using JS to avoid any overlay issues
+                        click_element(driver, see_all_button)
+                        print("Clicked 'See all' button for the section containing 'Subscribe'")
+                        break  # Found the section, no need to check further
+                except NoSuchElementException:
+                    print("No 'Subscribe' button found in this section")
+
+        except Exception as e:
+            print(f"Error: {e}")
+
     print("Scrolled to the bottom of the page.")
 
 
@@ -113,33 +138,10 @@ def subscribe_to_newsletters(driver: WebDriver, existing_urls: List[str]) -> Lis
     driver.get(url="https://www.linkedin.com/mynetwork/grow/")
 
     # Wait for the page to load
-    wait = WebDriverWait(driver, timeout=10)
+    wait: WebDriverWait = WebDriverWait(driver, timeout=10)
 
     # Scroll to the bottom of the page to load all the sections
-    scroll_to_bottom(driver)
-
-    try:
-        # Locate all divs with the class 'discover-sections-list__item'
-        sections = wait.until(
-            ec.visibility_of_all_elements_located((By.CLASS_NAME, "discover-sections-list__item"))
-        )
-
-        for section in sections:
-            # Check if the section contains a "Subscribe" button
-            try:
-                if section.find_element(by=By.XPATH, value=".//*[contains(@aria-label, 'Subscribe to')]"):
-                    # Scroll to the section and locate the "See all" button (usually the first button in the section)
-                    see_all_button = section.find_element(by=By.TAG_NAME, value="button")
-
-                    # Click the "See all" button using JS to avoid any overlay issues
-                    click_element(driver, see_all_button)
-                    print("Clicked 'See all' button for the section containing 'Subscribe'")
-                    break  # Found the section, no need to check further
-            except NoSuchElementException:
-                print("No 'Subscribe' button found in this section")
-
-    except Exception as e:
-        print(f"Error: {e}")
+    scroll_to_bottom(driver, wait)
 
     subscribed_newsletters: List[str] = []
     failed_attempts: Dict[str, WebElement] = {}
