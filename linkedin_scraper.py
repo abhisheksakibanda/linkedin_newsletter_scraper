@@ -4,6 +4,7 @@ This module contains functions to scrape newsletters from LinkedIn and subscribe
 import time
 from typing import List, Dict
 
+from cffi.cffi_opcode import CLASS_NAME
 from selenium.common import NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException, \
     WebDriverException
 from selenium.webdriver.chrome.webdriver import WebDriver
@@ -46,6 +47,7 @@ def scroll_to_bottom(driver: WebDriver, wait: WebDriverWait) -> None:
     last_height = driver.execute_script("return document.body.scrollHeight")
 
     while True:
+        time.sleep(5)
         # Scroll to the bottom of the page
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(2)  # Wait for content to load
@@ -72,7 +74,7 @@ def scroll_to_bottom(driver: WebDriver, wait: WebDriverWait) -> None:
                         # Click the "See all" button using JS to avoid any overlay issues
                         click_element(driver, see_all_button)
                         print("Clicked 'See all' button for the section containing 'Subscribe'")
-                        break  # Found the section, no need to check further
+                        return  # Found the section, no need to check further
                 except NoSuchElementException:
                     print("No 'Subscribe' button found in this section")
 
@@ -212,6 +214,7 @@ def scroll_to_bottom_of_modal(driver: WebDriver, modal: WebElement) -> None:
 
     while True:
         # Scroll to the bottom of the modal
+        time.sleep(3)
         driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", modal)
         time.sleep(6)  # Wait for content to load
 

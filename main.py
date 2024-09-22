@@ -24,6 +24,7 @@ def login_with_cookies(driver: WebDriver) -> None:
     :param driver: WebDriver instance
     """
     driver.get(url="https://www.linkedin.com/")
+
     try:
         load_cookies(driver=driver)
         if "login" in driver.current_url:  # Check if still on the login page
@@ -43,6 +44,8 @@ if __name__ == "__main__":
 
             # Load existing newsletter URLs
             existing_urls = load_newsletters_from_excel()
+
+            time.sleep(5)
 
             # Subscribe and scrape newsletter URLs
             newsletter_urls: List[str] = subscribe_to_newsletters(driver=chrome_driver, existing_urls=existing_urls)

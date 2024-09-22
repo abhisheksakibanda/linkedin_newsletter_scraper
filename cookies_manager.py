@@ -3,6 +3,7 @@ This module provides functions to load and save cookies from/to a file.
 """
 import os
 import pickle
+import time
 
 from selenium.webdriver.chrome.webdriver import WebDriver
 
@@ -18,6 +19,7 @@ def load_cookies(driver: WebDriver) -> None:
             cookies = pickle.load(file=cookies_file)
             for cookie in cookies:
                 driver.add_cookie(cookie_dict=cookie)
+        time.sleep(5)
         driver.refresh()
 
         if "feed" not in driver.current_url:
