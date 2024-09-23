@@ -37,8 +37,8 @@ def login_with_cookies(driver: WebDriver) -> None:
         driver.quit()
 
 if __name__ == "__main__":
-    try:
-        while True:
+    while True:
+        try:
             wait_for_internet()
             login_with_cookies(driver=chrome_driver)
 
@@ -69,14 +69,12 @@ if __name__ == "__main__":
                 print(
                     f"\nFailed to share {len(erroneous_urls)} newsletters after {retry_count} attempts:\n{erroneous_urls}")
 
+        except NoSuchElementException as e:
+            print(f"Element not found: {e}")
+        except WebDriverException as e:
+            print(f"WebDriver error: {e}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
             # Sleep for a specified interval before the next iteration
-            time.sleep(60)  # Sleep for 1 minute
-
-    except NoSuchElementException as e:
-        print(f"Element not found: {e}")
-    except WebDriverException as e:
-        print(f"WebDriver error: {e}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    finally:
-        chrome_driver.quit()
+            time.sleep(60)
