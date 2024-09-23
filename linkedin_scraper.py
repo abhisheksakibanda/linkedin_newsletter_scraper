@@ -4,9 +4,9 @@ This module contains functions to scrape newsletters from LinkedIn and subscribe
 import time
 from typing import List, Dict
 
-from cffi.cffi_opcode import CLASS_NAME
 from selenium.common import NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException, \
     WebDriverException
+from selenium.webdriver import Keys
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -214,8 +214,7 @@ def scroll_to_bottom_of_modal(driver: WebDriver, modal: WebElement) -> None:
 
     while True:
         # Scroll to the bottom of the modal
-        time.sleep(3)
-        driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", modal)
+        modal.send_keys(Keys.END)
         time.sleep(6)  # Wait for content to load
 
         # Calculate new scroll height
