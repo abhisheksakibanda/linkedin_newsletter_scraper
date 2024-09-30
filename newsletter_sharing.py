@@ -36,7 +36,7 @@ def share_newsletters(driver: WebDriver, newsletter_urls: List[str]) -> List[str
         wait = WebDriverWait(driver, timeout=10)
 
         try:
-            share_button: WebElement = driver.find_element(By.ID, "publishing-entity-share-dropdown-trigger")
+            share_button: WebElement = driver.find_element(by=By.ID, value="publishing-entity-share-dropdown-trigger")
             share_button.click()
             time.sleep(6)
             repost_list_item: WebElement = wait.until(
