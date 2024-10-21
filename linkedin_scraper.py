@@ -2,6 +2,7 @@
 This module contains functions to scrape newsletters from LinkedIn and subscribe to them.
 """
 import time
+from traceback import print_exc
 from typing import List, Dict
 
 from selenium.common import NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException, \
@@ -44,16 +45,17 @@ def scroll_to_bottom(driver: WebDriver, wait: WebDriverWait) -> None:
     :param driver: WebDriver instance
     :param wait: WebDriverWait instance for waiting for elements to load
     """
-    last_height = driver.execute_script("return document.body.scrollHeight")
+    scroll_section = driver.find_element(by=By.XPATH, value="//*[@tabindex='-1']")
+    last_height = driver.execute_script("return arguments[0].scrollHeight", scroll_section)
 
     while True:
         time.sleep(5)
         # Scroll to the bottom of the page
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        driver.execute_script("arguments[0].scrollTo(0, arguments[0].scrollHeight)", scroll_section)
         time.sleep(2)  # Wait for content to load
 
         # Calculate new scroll height
-        new_height = driver.execute_script("return document.body.scrollHeight")
+        new_height = driver.execute_script("return arguments[0].scrollHeight", scroll_section)
         if new_height == last_height:
             break
         last_height = new_height
@@ -61,7 +63,7 @@ def scroll_to_bottom(driver: WebDriver, wait: WebDriverWait) -> None:
         try:
             # Locate all divs with the class 'discover-sections-list__item'
             sections = wait.until(
-                ec.visibility_of_all_elements_located((By.CLASS_NAME, "discover-sections-list__item"))
+                ec.visibility_of_all_elements_located((By.TAG_NAME, "section"))
             )
 
             for section in sections:
@@ -79,7 +81,8 @@ def scroll_to_bottom(driver: WebDriver, wait: WebDriverWait) -> None:
                     print("No 'Subscribe' button found in this section")
 
         except Exception as e:
-            print(f"Error: {e}")
+            print('Exception of Type: ', e.__class__.__name__)
+            print_exc()
 
     print("Scrolled to the bottom of the page.")
 
