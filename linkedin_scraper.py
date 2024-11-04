@@ -152,13 +152,24 @@ def subscribe_to_newsletters(driver: WebDriver, existing_urls: List[str]) -> Lis
     failed_attempts: Dict[str, WebElement] = {}
 
     # Wait for the modal to appear
-    modal = wait.until(ec.visibility_of_element_located((By.CLASS_NAME, "artdeco-modal")))
+    dialog_box: WebElement = driver.find_elements(by=By.TAG_NAME, value="dialog")[-1]
+
+    div_elements_in_dialog: List[WebElement] = dialog_box.find_elements(By.TAG_NAME, "div")
+
+    modal: WebElement | None = None
+
+    for element in div_elements_in_dialog:
+        # Check if the element is scrollable by comparing scrollHeight and clientHeight
+        is_scrollable: bool = driver.execute_script("return arguments[0].scrollHeight > arguments[0].clientHeight;", element)
+        if is_scrollable:
+            modal = element  # Store the first scrollable element in 'modal'
+            break
 
     # Scroll to the bottom of the modal to load all newsletters
     scroll_to_bottom_of_modal(driver, modal)
 
     # Once all newsletters are loaded, find all the newsletter cards in the modal
-    newsletter_cards = modal.find_elements(by=By.CLASS_NAME, value="discover-fluid-entity-list--item")
+    newsletter_cards = modal.find_elements(by=By.CSS_SELECTOR, value='[data-view-name="cohort-card"]')
 
     for newsletter_card in newsletter_cards:
         handle_subscription(driver, newsletter_card, existing_urls, subscribed_newsletters, failed_attempts)
